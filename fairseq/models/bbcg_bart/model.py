@@ -18,6 +18,21 @@ from fairseq.models import (
     FairseqEncoder,
     register_model_architecture,
 )
+
+from fairseq.models.fairseq_encoder import EncoderOut
+from fairseq.modules import (
+    AdaptiveSoftmax,
+    LayerDropModuleList,
+    LayerNorm,
+    PositionalEmbedding,
+    SinusoidalPositionalEmbedding,
+    TransformerDecoderLayer,
+    TransformerEncoderLayer,
+)
+from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
+from torch import Tensor
+
+
 from fairseq.models.transformer import TransformerModel
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
 
