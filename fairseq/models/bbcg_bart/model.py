@@ -85,15 +85,6 @@ class BBCGBARTModel(TransformerModel):
         logger.info('Building BBCTransformerEncoder.....')
         return BBCTransformerEncoder(args, src_dict, embed_tokens)
 
-    @classmethod
-    def build_decoder(cls, args, tgt_dict, embed_tokens):
-        return TransformerDecoder(
-            args,
-            tgt_dict,
-            embed_tokens,
-            no_encoder_attn=getattr(args, "no_cross_attention", False),
-        )
-
     def forward(
         self, src_tokens, src_lengths, prev_output_tokens,
         features_only=False, classification_head_name=None, **kwargs
