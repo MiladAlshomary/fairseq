@@ -123,6 +123,7 @@ def load_checkpoint(args, trainer, **passthrough_args):
     ``trainer.get_train_iterator``.
     """
 
+    logger.info('loading checkpoint......')
     suffix = getattr(args, "checkpoint_suffix", "")
     if args.restore_file == "checkpoint_last.pt":
         checkpoint_path = os.path.join(args.save_dir, "checkpoint_last{}.pt".format(suffix))

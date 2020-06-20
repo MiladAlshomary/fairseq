@@ -107,6 +107,7 @@ def main(args, init_distributed=False):
         xm.rendezvous('load_checkpoint')  # wait for all workers
         xm.mark_step()
 
+    logger.info('After loading checkpoint....')
     # Train until the learning rate gets too small
     max_epoch = args.max_epoch or math.inf
     lr = trainer.get_lr()
@@ -197,6 +198,7 @@ def train(args, trainer, task, epoch_itr):
         default_log_format=('tqdm' if not args.no_progress_bar else 'simple'),
     )
 
+    logger.info('before begin an epoch ......')
     trainer.begin_epoch(epoch_itr.epoch)
 
     valid_subsets = args.valid_subset.split(',')
