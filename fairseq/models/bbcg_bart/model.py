@@ -17,7 +17,6 @@ from fairseq import utils
 from fairseq.models import (
     register_model,
     FairseqEncoder,
-    TransformerDecoder,
     register_model_architecture,
 )
 
@@ -35,7 +34,7 @@ from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from torch import Tensor
 
 
-from fairseq.models.transformer import TransformerModel
+from fairseq.models.transformer import TransformerModel, TransformerDecoder
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
 
 from .hub_interface import BARTHubInterface
