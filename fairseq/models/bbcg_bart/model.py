@@ -431,9 +431,12 @@ class BBCTransformerDecoder(TransformerDecoder):
 
         device = torch.device('cuda')
         placeholder = torch.ones(encoder_out.encoder_embedding.shape[0], 1, 1024).to(device)
+        mask_placeholder = torch.zeros(encoder_out.encoder_padding_mask.shape[0], 1).bool().to(device)
         logger.info(encoder_out.encoder_embedding.shape)
-        newvec = torch.cat((encoder_out.encoder_embedding, placeholder), 1)
+        newvec  = torch.cat((placeholder, encoder_out.encoder_embedding), 1)
+        newmask = torch.cat((mask_placeholder, encoder_out.encoder_padding_mask), 1)
         logger.info(newvec.shape)
+        logger.info(newmask.shape)
 
         # decoder layers
         attn: Optional[Tensor] = None
