@@ -13,6 +13,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import math
+from typing import Any, Dict, List, Optional, Tuple
+
+
 from fairseq import utils
 from fairseq.models import (
     register_model,
@@ -424,6 +428,13 @@ class BBCTransformerDecoder(TransformerDecoder):
         if self.cross_self_attention or prev_output_tokens.eq(self.padding_idx).any():
             self_attn_padding_mask = prev_output_tokens.eq(self.padding_idx)
 
+
+        device = torch.device('cuda')
+        placeholder = torch.ones(encoder_out.encoder_embedding.shape[0], 1, 1024).to(device)
+        logger.info(encoder_out.encoder_embedding.shape)
+        newvec = torch.cat((encoder_out.encoder_embedding, placeholder), 1)
+        logger.info(newvec.shape)
+
         # decoder layers
         attn: Optional[Tensor] = None
         inner_states: List[Optional[Tensor]] = [x]
@@ -435,7 +446,7 @@ class BBCTransformerDecoder(TransformerDecoder):
 
             x, layer_attn, _ = layer(
                 x,
-                encoder_out.encoder_out if encoder_out is not None else None,
+                newvec if encoder_out is not None else None,
                 encoder_out.encoder_padding_mask if encoder_out is not None else None,
                 incremental_state,
                 self_attn_mask=self_attn_mask,
@@ -463,8 +474,4 @@ class BBCTransformerDecoder(TransformerDecoder):
         if self.project_out_dim is not None:
             x = self.project_out_dim(x)
 
-        logger.info('inside extract_features_scriptable ........')
         return x, {"attn": [attn], "inner_states": inner_states}
-
-
-        
