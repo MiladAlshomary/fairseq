@@ -541,12 +541,11 @@ class BBCTransformerDecoder(TransformerDecoder):
 
 
 
-        logger.info(user_context.shape)
         device = torch.device('cuda')
         #placeholder = torch.ones(encoder_out.encoder_embedding.shape[0], 1, 1024).to(device)
         mask_placeholder = torch.zeros(encoder_out.encoder_padding_mask.shape[0], 1).bool().to(device)
         #logger.info(encoder_out.encoder_embedding.shape)
-        extended_encoder_out  = torch.cat((user_context, encoder_out.encoder_embedding), 1)
+        extended_encoder_out  = torch.cat((user_context.unsqueeze(1), encoder_out.encoder_embedding), 1)
         extended_encoder_mask = torch.cat((mask_placeholder, encoder_out.encoder_padding_mask), 1)
         #logger.info(newvec.shape)
         #logger.info(newmask.shape)
