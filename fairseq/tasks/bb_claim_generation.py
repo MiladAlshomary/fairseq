@@ -188,7 +188,7 @@ class BBClaimGenerationTask(FairseqTask):
                             help='path to the file where users info exist')
         parser.add_argument('--user-context-num-feats', type=int, default=192,
                             help='the dimensionality of the user vector')
-        parser.add_argument('--use-nonlinear-projection', type=bool, action='store_true',
+        parser.add_argument('--use-nonlinear-projection', action='store_true',
                             help='non linear projection of user context feats')
 
         # options for reporting BLEU during validation
