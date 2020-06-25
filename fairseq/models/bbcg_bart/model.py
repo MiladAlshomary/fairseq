@@ -106,7 +106,7 @@ class BBCGBARTModel(TransformerModel):
 
         self.classification_heads = nn.ModuleDict()
 
-        self.user_encoder = UserContextEncoder(args.user_context_num_feats,1024, args.use_nonlinear_projection)
+        self.user_encoder = UserContextEncoder(args.user_context_num_feats,1024, args.user_encoder_dropout, args.use_nonlinear_projection)
 
     @staticmethod
     def add_args(parser):
