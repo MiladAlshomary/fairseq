@@ -53,7 +53,6 @@ class UserContextEncoder(nn.Module):
             use_nonlinear_projection):
         """
         Args:
-            num_layers (int): number of decoder layers.
             nfeats (int): size of image features.
             outdim (int): size of the output dimension.
             dropout (float): dropout probablity.
@@ -61,7 +60,6 @@ class UserContextEncoder(nn.Module):
                     when projecting the image features or not.
         """
         super(UserContextEncoder, self).__init__()
-        self.num_layers = num_layers
         self.nfeats = nfeats
         self.outdim = outdim
         self.dropout = dropout
@@ -120,6 +118,18 @@ class BBCGBARTModel(TransformerModel):
             choices=utils.get_available_activation_fns(),
             help='activation function to use for pooler layer'
         )
+
+
+    def load_state_dict(self, state_dict, args=None):
+        """Copies parameters and buffers from *state_dict* into this module and
+        its descendants.
+
+        Overrides the method in :class:`nn.Module`. Compared with that method
+        this additionally "upgrades" *state_dicts* from old checkpoints.
+        """
+        self.upgrade_state_dict(state_dict)
+        new_state_dict = prune_state_dict(state_dict, args)
+        return super().load_state_dict(new_state_dict, False)
 
     @property
     def supported_targets(self):
