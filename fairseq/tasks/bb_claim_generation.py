@@ -182,8 +182,14 @@ class BBClaimGenerationTask(FairseqTask):
                             help='amount to upsample primary dataset')
         parser.add_argument('--truncate-source', action='store_true', default=False,
                             help='truncate source to max-source-positions')
+        
+
         parser.add_argument('--user-context-path', type=str, default=None,
                             help='path to the file where users info exist')
+        parser.add_argument('--user-context-num-feats', type=int, default=192,
+                            help='the dimensionality of the user vector')
+        parser.add_argument('--use-nonlinear-projection', type=bool, action='store_true',
+                            help='non linear projection of user context feats')
 
         # options for reporting BLEU during validation
         parser.add_argument('--eval-bleu', action='store_true',

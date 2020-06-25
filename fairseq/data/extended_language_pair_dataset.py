@@ -195,7 +195,7 @@ class ExtendedLanguagePairDataset(FairseqDataset):
     def __getitem__(self, index):
         tgt_item = self.tgt[index] if self.tgt is not None else None
         src_item = self.src[index]
-        user_context_item = slef.user_context[index]
+        user_context_item = self.user_context[index]
         # Append EOS to end of tgt sentence if it does not have an EOS and remove
         # EOS from end of src sentence if it exists. This is useful when we use
         # use existing datasets for opposite directions i.e., when we want to
@@ -223,7 +223,7 @@ class ExtendedLanguagePairDataset(FairseqDataset):
             'id': index,
             'source': src_item,
             'target': tgt_item,
-            'user_context': user_context
+            'user_context': user_context_item
         }
         if self.align_dataset is not None:
             example['alignment'] = self.align_dataset[index]

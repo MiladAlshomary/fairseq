@@ -47,6 +47,44 @@ from .hub_interface import BARTHubInterface
 logger = logging.getLogger(__name__)
 
 
+class UserContextEncoder(nn.Module):
+
+    def __init__(self, nfeats, outdim, dropout,
+            use_nonlinear_projection):
+        """
+        Args:
+            num_layers (int): number of decoder layers.
+            nfeats (int): size of image features.
+            outdim (int): size of the output dimension.
+            dropout (float): dropout probablity.
+            use_nonliner_projection (bool): use non-linear activation
+                    when projecting the image features or not.
+        """
+        super(UserContextEncoder, self).__init__()
+        self.num_layers = num_layers
+        self.nfeats = nfeats
+        self.outdim = outdim
+        self.dropout = dropout
+        
+        layers = []
+        layers.append( nn.Linear(nfeats, nfeats) )
+        if use_nonlinear_projection:
+            layers.append( nn.Tanh() )
+        
+        layers.append( nn.Dropout(dropout) )
+        layers.append( nn.Linear(nfeats, outdim) )
+        if use_nonlinear_projection:
+            layers.append( nn.Tanh() )
+        layers.append( nn.Dropout(dropout) )
+        #self.batch_norm = nn.BatchNorm2d(512)
+        self.layers = nn.Sequential(*layers)
+
+    def forward(self, input):
+        out = self.layers(input)
+        return out
+
+
+
 @register_model('bbcg_bart')
 class BBCGBARTModel(TransformerModel):
 
@@ -67,6 +105,8 @@ class BBCGBARTModel(TransformerModel):
         self.apply(init_bert_params)
 
         self.classification_heads = nn.ModuleDict()
+
+        self.user_encoder = UserContextEncoder(args.user_context_num_feats,1024, args.use_nonlinear_projection)
 
     @staticmethod
     def add_args(parser):
