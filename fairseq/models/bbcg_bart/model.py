@@ -540,14 +540,16 @@ class BBCTransformerDecoder(TransformerDecoder):
             self_attn_padding_mask = prev_output_tokens.eq(self.padding_idx)
 
 
+
+        logger.info(user_context.shape)
         device = torch.device('cuda')
-        placeholder = torch.ones(encoder_out.encoder_embedding.shape[0], 1, 1024).to(device)
+        #placeholder = torch.ones(encoder_out.encoder_embedding.shape[0], 1, 1024).to(device)
         mask_placeholder = torch.zeros(encoder_out.encoder_padding_mask.shape[0], 1).bool().to(device)
-        logger.info(encoder_out.encoder_embedding.shape)
-        newvec  = torch.cat((placeholder, encoder_out.encoder_embedding), 1)
-        newmask = torch.cat((mask_placeholder, encoder_out.encoder_padding_mask), 1)
-        logger.info(newvec.shape)
-        logger.info(newmask.shape)
+        #logger.info(encoder_out.encoder_embedding.shape)
+        extended_encoder_out  = torch.cat((user_context, encoder_out.encoder_embedding), 1)
+        extended_encoder_mask = torch.cat((mask_placeholder, encoder_out.encoder_padding_mask), 1)
+        #logger.info(newvec.shape)
+        #logger.info(newmask.shape)
 
         # decoder layers
         attn: Optional[Tensor] = None
@@ -560,8 +562,8 @@ class BBCTransformerDecoder(TransformerDecoder):
 
             x, layer_attn, _ = layer(
                 x,
-                newvec if encoder_out is not None else None,
-                newmask if encoder_out is not None else None,
+                extended_encoder_out if encoder_out is not None else None,
+                extended_encoder_mask if encoder_out is not None else None,
                 incremental_state,
                 self_attn_mask=self_attn_mask,
                 self_attn_padding_mask=self_attn_padding_mask,
