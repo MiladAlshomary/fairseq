@@ -17,6 +17,7 @@ import torch
 
 from fairseq.data import data_utils
 
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -199,11 +200,13 @@ class EpochBatchIterator(EpochBatchIterating):
         buffer_size (int, optional): the number of batches to keep ready in the
             queue. Helps speeding up dataloading. When buffer_size is zero, the
             default torch.utils.data.DataLoader preloading is used.
+        timeout (int, optional): if positive, the timeout value for collecting a batch
+            from workers. Should always be non-negative. (default: ``0``)
     """
 
     def __init__(
         self, dataset, collate_fn, batch_sampler, seed=1, num_shards=1, shard_id=0,
-        num_workers=0, epoch=1, buffer_size=0
+        num_workers=0, epoch=1, buffer_size=0, timeout=0,
     ):
         assert isinstance(dataset, torch.utils.data.Dataset)
         self.dataset = dataset
@@ -216,6 +219,7 @@ class EpochBatchIterator(EpochBatchIterating):
         # This upper limit here is to prevent people from abusing this feature
         # in a shared computing environment.
         self.buffer_size = min(buffer_size, 20)
+        self.timeout = timeout
 
         self.epoch = max(epoch, 1)  # we use 1-based indexing for epochs
         self.shuffle = True
@@ -341,6 +345,7 @@ class EpochBatchIterator(EpochBatchIterating):
             collate_fn=self.collate_fn,
             batch_sampler=batches[offset:],
             num_workers=self.num_workers,
+            timeout=self.timeout,
         )
 
         # Wrap with a BufferedIterator if needed
@@ -364,68 +369,24 @@ class GroupedIterator(CountingIterator):
     """
 
     def __init__(self, iterable, chunk_size):
+        itr = _chunk_iterator(iterable, chunk_size)
+        super().__init__(
+            itr,
+            start=int(math.ceil(getattr(iterable, 'n', 0) / float(chunk_size))),
+            total=int(math.ceil(len(iterable) / float(chunk_size))),
+        )
         self.chunk_size = chunk_size
 
-        n = getattr(iterable, 'n', 0)
-        itr = ichunked(
-            iterable,
-            chunk_size,
-            remaining=(len(iterable) - n),
-        )
-        start = int(math.ceil(n / float(chunk_size)))
-        total = int(math.ceil(len(iterable) / float(chunk_size)))
-        super().__init__(itr, start=start, total=total)
 
-
-class IndexableIterator(object):
-
-    def __init__(self, iterable, length):
-        self.iterable = iterable
-        self.itr = iter(self)
-        self.n = length
-        self._cache = []
-
-    def __len__(self):
-        return self.n
-
-    def __getitem__(self, index):
-        if index >= self.n:
-            raise IndexError
-        while len(self._cache) <= index:
-            self._cache.append(next(self.iterable))
-        return self._cache[index]
-
-    def __iter__(self):
-        for i in range(len(self)):
-            yield self[i]
-
-    def __next__(self):
-        return next(self.itr)
-
-    def __eq__(self, other):
-        if len(self) != len(other):
-            return False
-        for i in range(len(self)):
-            if self[i] != other[i]:
-                return False
-        return True
-
-
-def ichunked(iterable, n, remaining=None):
-    """Adapted from more_itertools.ichunked"""
-    if remaining is None:
-        remaining = len(iterable)
-    source = iter(iterable)
-    while remaining > 0:
-        item = next(source)
-
-        # Clone the source and yield an n-length slice
-        source, it = itertools.tee(itertools.chain([item], source))
-        yield IndexableIterator(itertools.islice(it, n), min(remaining, n))
-
-        # Advance the source iterable
-        next(itertools.islice(source, n, n), None)
-        remaining = max(0, remaining - n)
+def _chunk_iterator(itr, chunk_size):
+    chunk = []
+    for x in itr:
+        chunk.append(x)
+        if len(chunk) == chunk_size:
+            yield chunk
+            chunk = []
+    if len(chunk) > 0:
+        yield chunk
 
 
 class ShardedIterator(CountingIterator):

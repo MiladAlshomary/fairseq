@@ -32,6 +32,7 @@ def get_training_parser(default_task="translation"):
 def get_generation_parser(interactive=False, default_task="translation"):
     parser = get_parser("Generation", default_task)
     add_dataset_args(parser, gen=True)
+    add_distributed_training_args(parser)
     add_generation_args(parser)
     if interactive:
         add_interactive_args(parser)
@@ -250,6 +251,7 @@ def get_parser(desc, default_task="translation"):
                         help='suffix to add to the checkpoint file name')
     parser.add_argument('--quantization-config-path', default=None,
                         help='path to quantization config file')
+    parser.add_argument('--profile', action='store_true', help='enable autograd profiler emit_nvtx')
 
     from fairseq.registry import REGISTRIES
     for registry_name, REGISTRY in REGISTRIES.items():
@@ -326,7 +328,8 @@ def add_dataset_args(parser, train=False, gen=False):
     group.add_argument('--max-sentences', '--batch-size', type=int, metavar='N',
                        help='maximum number of sentences in a batch')
     group.add_argument('--required-batch-size-multiple', default=8, type=int, metavar='N',
-                       help='batch size will be a multiplier of this value')
+                       help='batch size will either be less than this value, '
+                            'or a multiple of this value')
     parser.add_argument('--dataset-impl', metavar='FORMAT',
                         choices=get_available_dataset_impl(),
                         help='output dataset implementation')
@@ -434,7 +437,7 @@ def add_optimization_args(parser):
                        help='force stop training at specified epoch')
     group.add_argument('--max-update', '--mu', default=0, type=int, metavar='N',
                        help='force stop training at specified update')
-    group.add_argument('--clip-norm', default=25, type=float, metavar='NORM',
+    group.add_argument('--clip-norm', default=0.0, type=float, metavar='NORM',
                        help='clip threshold of gradients')
     group.add_argument('--sentence-avg', action='store_true',
                        help='normalize gradients by the number of sentences in a batch'
