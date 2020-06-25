@@ -16,6 +16,7 @@ import torch.nn.functional as F
 import math
 from typing import Any, Dict, List, Optional, Tuple
 
+from fairseq.checkpoint_utils import prune_state_dict
 
 from fairseq import utils
 from fairseq.models import (
@@ -120,7 +121,7 @@ class BBCGBARTModel(TransformerModel):
         )
 
 
-    def load_state_dict(self, state_dict, args=None):
+    def load_state_dict(self, state_dict, strict=True, args=None):
         """Copies parameters and buffers from *state_dict* into this module and
         its descendants.
 
@@ -560,7 +561,7 @@ class BBCTransformerDecoder(TransformerDecoder):
             x, layer_attn, _ = layer(
                 x,
                 newvec if encoder_out is not None else None,
-                encoder_out.encoder_padding_mask if encoder_out is not None else None,
+                newmask if encoder_out is not None else None,
                 incremental_state,
                 self_attn_mask=self_attn_mask,
                 self_attn_padding_mask=self_attn_padding_mask,
