@@ -122,7 +122,8 @@ def load_langpair_dataset(
 
     tgt_dataset_sizes = tgt_dataset.sizes if tgt_dataset is not None else None
 
-    logger.info('Loading user big issues from {}', split)
+    logger.info('Loading user big issues from {}'.format(split))
+    
     user_context = pickle.load(open(os.path.join(user_context_path, '{}_with_claim.users_big_issues.pkl'.format(split)), 'rb'))
 
     return ExtendedLanguagePairDataset(
