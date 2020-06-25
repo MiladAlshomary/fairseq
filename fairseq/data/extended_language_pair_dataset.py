@@ -77,6 +77,8 @@ def collate(
     else:
         ntokens = sum(len(s['source']) for s in samples)
 
+    user_context_tensor = torch.tensor([s['user_context'] for s in samples]).index_select(0, sort_order)
+    
     batch = {
         'id': id,
         'nsentences': len(samples),
@@ -84,6 +86,7 @@ def collate(
         'net_input': {
             'src_tokens': src_tokens,
             'src_lengths': src_lengths,
+            'user_context': user_context_tensor
         },
         'target': target,
     }
@@ -117,7 +120,9 @@ def collate(
 
     return batch
 
-class LanguagePairDataset(FairseqDataset):
+
+
+class ExtendedLanguagePairDataset(FairseqDataset):
     """
     A pair of torch.utils.data.Datasets.
 
@@ -151,7 +156,7 @@ class LanguagePairDataset(FairseqDataset):
     """
 
     def __init__(
-        self, src, src_sizes, src_dict,
+        self, src, src_sizes, src_dict, user_context,
         tgt=None, tgt_sizes=None, tgt_dict=None,
         left_pad_source=True, left_pad_target=False,
         max_source_positions=1024, max_target_positions=1024,
@@ -168,6 +173,7 @@ class LanguagePairDataset(FairseqDataset):
             assert len(src) == len(tgt), "Source and target must contain the same number of examples"
         self.src = src
         self.tgt = tgt
+        self.user_context = user_context
         self.src_sizes = np.array(src_sizes)
         self.tgt_sizes = np.array(tgt_sizes) if tgt_sizes is not None else None
         self.src_dict = src_dict
@@ -189,6 +195,7 @@ class LanguagePairDataset(FairseqDataset):
     def __getitem__(self, index):
         tgt_item = self.tgt[index] if self.tgt is not None else None
         src_item = self.src[index]
+        user_context_item = slef.user_context[index]
         # Append EOS to end of tgt sentence if it does not have an EOS and remove
         # EOS from end of src sentence if it exists. This is useful when we use
         # use existing datasets for opposite directions i.e., when we want to
@@ -216,6 +223,7 @@ class LanguagePairDataset(FairseqDataset):
             'id': index,
             'source': src_item,
             'target': tgt_item,
+            'user_context': user_context
         }
         if self.align_dataset is not None:
             example['alignment'] = self.align_dataset[index]

@@ -96,11 +96,13 @@ class BBCGBARTModel(TransformerModel):
         )
 
     def forward(
-        self, src_tokens, src_lengths, prev_output_tokens,
+        self, src_tokens, src_lengths, prev_output_tokens, user_context,
         features_only=False, classification_head_name=None, **kwargs
     ):
         if classification_head_name is not None:
             features_only = True
+
+        user_context = self.user_encoder(user_context)
 
         encoder_out = self.encoder(
             src_tokens,
@@ -109,6 +111,7 @@ class BBCGBARTModel(TransformerModel):
         )
         x, extra = self.decoder(
             prev_output_tokens,
+            user_context,
             encoder_out=encoder_out,
             features_only=features_only,
             **kwargs,
@@ -347,12 +350,68 @@ class BBCTransformerDecoder(TransformerDecoder):
 
         logger.info('initialization of BBCTransformerDecoder')
 
-    def xx():
-        device = torch.device('cuda')
-        placeholder = torch.ones(22,1,1024).to(device)
-        logger.info(encoder_out.encoder_embedding.shape)
-        newvec = torch.cat((encoder_out.encoder_embedding, placeholder), 1)
-        logger.info(newvec.shape)
+
+    def forward(
+        self,
+        prev_output_tokens,
+        user_context,
+        encoder_out: Optional[EncoderOut] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        features_only: bool = False,
+        alignment_layer: Optional[int] = None,
+        alignment_heads: Optional[int] = None,
+        src_lengths: Optional[Any] = None,
+        return_all_hiddens: bool = False,
+    ):
+        """
+        Args:
+            prev_output_tokens (LongTensor): previous decoder outputs of shape
+                `(batch, tgt_len)`, for teacher forcing
+            encoder_out (optional): output from the encoder, used for
+                encoder-side attention
+            incremental_state (dict): dictionary used for storing state during
+                :ref:`Incremental decoding`
+            features_only (bool, optional): only return features without
+                applying output layer (default: False).
+
+        Returns:
+            tuple:
+                - the decoder's output of shape `(batch, tgt_len, vocab)`
+                - a dictionary with any model-specific outputs
+        """
+        x, extra = self.extract_features(
+            prev_output_tokens,
+            user_context,
+            encoder_out=encoder_out,
+            incremental_state=incremental_state,
+            alignment_layer=alignment_layer,
+            alignment_heads=alignment_heads,
+        )
+        if not features_only:
+            x = self.output_layer(x)
+        return x, extra
+
+
+    def extract_features(
+        self,
+        prev_output_tokens,
+        user_context,
+        encoder_out: Optional[EncoderOut] = None,
+        incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
+        full_context_alignment: bool = False,
+        alignment_layer: Optional[int] = None,
+        alignment_heads: Optional[int] = None,
+    ):
+        return self.extract_features_scriptable(
+            prev_output_tokens,
+            user_context,
+            encoder_out,
+            incremental_state,
+            full_context_alignment,
+            alignment_layer,
+            alignment_heads,
+        )
+
 
     '''
     A scriptable subclass of this class has an extract_features method and calls
@@ -362,6 +421,7 @@ class BBCTransformerDecoder(TransformerDecoder):
     def extract_features_scriptable(
         self,
         prev_output_tokens,
+        user_context,
         encoder_out: Optional[EncoderOut] = None,
         incremental_state: Optional[Dict[str, Dict[str, Optional[Tensor]]]] = None,
         full_context_alignment: bool = False,

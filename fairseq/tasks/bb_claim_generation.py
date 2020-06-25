@@ -8,6 +8,7 @@ import json
 import itertools
 import logging
 import os
+import pickle
 
 import numpy as np
 
@@ -18,7 +19,7 @@ from fairseq.data import (
     data_utils,
     encoders,
     indexed_dataset,
-    LanguagePairDataset,
+    ExtendedLanguagePairDataset,
     PrependTokenDataset,
     StripTokenDataset,
     TruncateDataset,
@@ -36,6 +37,7 @@ def load_langpair_dataset(
     data_path, split,
     src, src_dict,
     tgt, tgt_dict,
+    user_context_path,
     combine, dataset_impl, upsample_primary,
     left_pad_source, left_pad_target, max_source_positions,
     max_target_positions, prepend_bos=False, load_alignments=False,
@@ -119,8 +121,12 @@ def load_langpair_dataset(
             align_dataset = data_utils.load_indexed_dataset(align_path, None, dataset_impl)
 
     tgt_dataset_sizes = tgt_dataset.sizes if tgt_dataset is not None else None
-    return LanguagePairDataset(
+
+    user_context = pickle.load(open(user_context_path, 'rb'))
+
+    return ExtendedLanguagePairDataset(
         src_dataset, src_dataset.sizes, src_dict,
+        user_context,
         tgt_dataset, tgt_dataset_sizes, tgt_dict,
         left_pad_source=left_pad_source,
         left_pad_target=left_pad_target,
@@ -176,6 +182,8 @@ class BBClaimGenerationTask(FairseqTask):
                             help='amount to upsample primary dataset')
         parser.add_argument('--truncate-source', action='store_true', default=False,
                             help='truncate source to max-source-positions')
+        parser.add_argument('--user-context-path', type=str, default=None,
+                            help='path to the file where users info exist')
 
         # options for reporting BLEU during validation
         parser.add_argument('--eval-bleu', action='store_true',
@@ -247,6 +255,7 @@ class BBClaimGenerationTask(FairseqTask):
 
         self.datasets[split] = load_langpair_dataset(
             data_path, split, src, self.src_dict, tgt, self.tgt_dict,
+            self.args.user_context_path,
             combine=combine, dataset_impl=self.args.dataset_impl,
             upsample_primary=self.args.upsample_primary,
             left_pad_source=self.args.left_pad_source,
@@ -258,7 +267,7 @@ class BBClaimGenerationTask(FairseqTask):
         )
 
     def build_dataset_for_inference(self, src_tokens, src_lengths):
-        return LanguagePairDataset(src_tokens, src_lengths, self.source_dictionary)
+        return ExtendedLanguagePairDataset(src_tokens, src_lengths, self.source_dictionary)
 
     def build_model(self, args):
         model = super().build_model(args)
