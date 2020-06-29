@@ -89,11 +89,12 @@ class BARTHubInterface(nn.Module):
             return sentences[0]
         return sentences
 
-    def _build_sample(self, src_tokens: List[torch.LongTensor]):
+    def _build_sample(self, src_tokens: List[torch.LongTensor], user_contexts):
         # assert torch.is_tensor(src_tokens)
         dataset = self.task.build_dataset_for_inference(
             src_tokens,
             [x.numel() for x in src_tokens],
+            user_contexts
         )
         sample = dataset.collater(dataset)
         sample = utils.apply_to_sample(
@@ -102,13 +103,13 @@ class BARTHubInterface(nn.Module):
         )
         return sample
 
-    def sample(self, sentences: List[str], beam: int = 1, verbose: bool = False, **kwargs) -> str:
+    def sample(self, sentences: List[str], user_contexts, beam: int = 1, verbose: bool = False, **kwargs) -> str:
         input = [self.encode(sentence) for sentence in sentences]
-        hypos = self.generate(input, beam, verbose, **kwargs)
+        hypos = self.generate(input, user_contexts, beam, verbose, **kwargs)
         return [self.decode(x['tokens']) for x in hypos]
 
     def generate(self, tokens: List[torch.LongTensor], beam: int = 5, verbose: bool = False, **kwargs) -> torch.LongTensor:
-        sample = self._build_sample(tokens)
+        sample = self._build_sample(tokens, user_contexts)
 
         # build generator using current args as well as any kwargs
         gen_args = copy.copy(self.args)
