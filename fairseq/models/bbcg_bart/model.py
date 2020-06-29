@@ -42,7 +42,7 @@ from torch import Tensor
 from fairseq.models.transformer import TransformerModel, TransformerDecoder
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
 
-from .hub_interface import BARTHubInterface
+from .hub_interface import BBCGBARTHubInterface
 
 
 logger = logging.getLogger(__name__)
