@@ -20,7 +20,7 @@ from fairseq.data import encoders
 logger = logging.getLogger(__name__)
 
 
-class BARTHubInterface(nn.Module):
+class BBCGBARTHubInterface(nn.Module):
     """A simple PyTorch Hub interface to BART.
 
     Usage: https://github.com/pytorch/fairseq/tree/master/examples/BART

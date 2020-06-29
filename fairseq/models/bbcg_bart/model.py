@@ -196,7 +196,7 @@ class BBCGBARTModel(TransformerModel):
             load_checkpoint_heads=True,
             **kwargs,
         )
-        return BARTHubInterface(x['args'], x['task'], x['models'][0])
+        return BBCGBARTHubInterface(x['args'], x['task'], x['models'][0])
 
     def register_classification_head(self, name, num_classes=None, inner_dim=None, **kwargs):
         """Register a classification head."""
