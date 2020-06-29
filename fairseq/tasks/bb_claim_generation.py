@@ -277,8 +277,9 @@ class BBClaimGenerationTask(FairseqTask):
             truncate_source=self.args.truncate_source,
         )
 
-    def build_dataset_for_inference(self, src_tokens, src_lengths):
-        return ExtendedLanguagePairDataset(src_tokens, src_lengths, self.source_dictionary)
+    def build_dataset_for_inference(self, src_tokens, src_lengths, user_context):
+        logger.info('Building dataset for inference.....')
+        return ExtendedLanguagePairDataset(src_tokens, src_lengths, self.source_dictionary, user_context)
 
     def build_model(self, args):
         model = super().build_model(args)
