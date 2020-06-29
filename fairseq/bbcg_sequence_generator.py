@@ -808,7 +808,7 @@ class EnsembleModel(nn.Module):
             )
 
 
-class BBCGSequenceGeneratorWithAlignment(SequenceGenerator):
+class BBCGSequenceGeneratorWithAlignment(BBCGSequenceGenerator):
     def __init__(self, models, tgt_dict, left_pad_target=False, **kwargs):
         """Generates translations of a given source sentence.
 
