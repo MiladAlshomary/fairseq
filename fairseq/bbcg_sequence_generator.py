@@ -217,7 +217,7 @@ class BBCGSequenceGenerator(nn.Module):
         # ensure encoder_outs is a List.
         assert encoder_outs is not None
 
-        user_contexts = self.model.reorder_encoder_out(user_context, new_order)
+        user_contexts = self.model.reorder_user_contexts(user_context, new_order)
 
         # initialize buffers
         scores = (
@@ -278,7 +278,7 @@ class BBCGSequenceGenerator(nn.Module):
                     encoder_outs, reorder_state
                 )
 
-                user_contexts = self.model.reorder_user_contexts(user_contexts)
+                user_contexts = self.model.reorder_user_contexts(user_contexts, reorder_state)
 
             lprobs, avg_attn_scores = self.model.forward_decoder(
                 tokens[:, : step + 1],
@@ -717,6 +717,13 @@ class EnsembleModel(nn.Module):
         ]
 
     @torch.jit.export
+    def user_encoder(self, user_context):
+        return [
+            model.user_encoder(user_context)
+            for model in self.models
+        ]
+
+    @torch.jit.export
     def forward_decoder(
         self,
         tokens,
@@ -804,6 +811,16 @@ class EnsembleModel(nn.Module):
                 model.encoder.reorder_encoder_out(encoder_outs[i], new_order)
             )
         return new_outs
+
+
+    @torch.jit.export
+    def user_encoder(self, user_context):
+        return [
+            model.user_encoder(user_context)
+            for model in self.models
+        ]
+
+
 
     def reorder_user_contexts(self, user_contexts:Optional[List[Tensor]] , new_order):
         new_outs: List[Tensor] = []
