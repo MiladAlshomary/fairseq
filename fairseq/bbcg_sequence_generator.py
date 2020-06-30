@@ -202,7 +202,6 @@ class BBCGSequenceGenerator(nn.Module):
         #for the encoder, don't pass the user context
         del net_input['user_context']
 
-        logger.info(net_input[0])
         # compute the encoder output for each beam
         encoder_outs = self.model.forward_encoder(net_input)
 
