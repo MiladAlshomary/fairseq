@@ -6,6 +6,7 @@
 import math
 from typing import Dict, List, Optional
 
+import copy
 import torch
 import torch.nn as nn
 from fairseq import search, utils
@@ -175,7 +176,8 @@ class BBCGSequenceGenerator(nn.Module):
                 for i in range(self.model.models_size)
             ],
         )
-        net_input = sample["net_input"]
+
+        net_input = copy.deepcopy(sample["net_input"])
         src_tokens = net_input["src_tokens"]
         # length of the source text being the character length except EndOfSentence and pad
         src_lengths = (
@@ -205,12 +207,17 @@ class BBCGSequenceGenerator(nn.Module):
         # compute the encoder output for each beam
         encoder_outs = self.model.forward_encoder(net_input)
 
+        user_context = sample["net_input"]['user_context']
+        user_context = self.model.user_encoder(user_context)
+
         # placeholder of indices for bsz * beam_size to hold tokens and accumulative scores
         new_order = torch.arange(bsz).view(-1, 1).repeat(1, beam_size).view(-1)
         new_order = new_order.to(src_tokens.device).long()
         encoder_outs = self.model.reorder_encoder_out(encoder_outs, new_order)
         # ensure encoder_outs is a List.
         assert encoder_outs is not None
+
+        user_contexts = self.model.reorder_encoder_out(user_context, new_order)
 
         # initialize buffers
         scores = (
@@ -251,6 +258,7 @@ class BBCGSequenceGenerator(nn.Module):
         bbsz_offsets = (torch.arange(0, bsz) * beam_size).unsqueeze(1).type_as(tokens)
         cand_offsets = torch.arange(0, cand_size).type_as(tokens)
 
+
         reorder_state: Optional[Tensor] = None
         batch_idxs: Optional[Tensor] = None
         for step in range(max_len + 1):  # one extra step for EOS marker
@@ -270,13 +278,12 @@ class BBCGSequenceGenerator(nn.Module):
                     encoder_outs, reorder_state
                 )
 
-
-            user_context = sample["net_input"]['user_context']
+                user_contexts = self.model.reorder_user_contexts(user_contexts)
 
             lprobs, avg_attn_scores = self.model.forward_decoder(
                 tokens[:, : step + 1],
                 encoder_outs,
-                user_context,
+                user_contexts,
                 incremental_states,
                 self.temperature,
             )
@@ -714,7 +721,7 @@ class EnsembleModel(nn.Module):
         self,
         tokens,
         encoder_outs: List[EncoderOut],
-        user_context,
+        user_contexts: List[Tensor],
         incremental_states: List[Dict[str, Dict[str, Optional[Tensor]]]],
         temperature: float = 1.0,
     ):
@@ -724,6 +731,8 @@ class EnsembleModel(nn.Module):
         for i, model in enumerate(self.models):
             if self.has_encoder():
                 encoder_out = encoder_outs[i]
+            
+            user_context = user_contexts[i]
             # decode each model
             if self.has_incremental_states():
                 decoder_out = model.decoder.forward(
@@ -795,6 +804,16 @@ class EnsembleModel(nn.Module):
                 model.encoder.reorder_encoder_out(encoder_outs[i], new_order)
             )
         return new_outs
+
+    def reorder_user_contexts(self, user_contexts:Optional[List[Tensor]] , new_order):
+        new_outs: List[Tensor] = []
+
+        for i, model in enumerate(self.models):
+            new_outs.append(
+                model.user_encoder.reorder_user_contexts(user_contexts[i], new_order)
+            )
+        return new_outs
+
 
     @torch.jit.export
     def reorder_incremental_state(

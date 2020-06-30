@@ -83,6 +83,13 @@ class UserContextEncoder(nn.Module):
         return out
 
 
+    @torch.jit.export
+    def reorder_user_contexts(self, user_context: Tensor, new_order):
+        new_user_context = user_context.index_select(0, new_order)
+
+        return new_user_context
+        
+
 
 @register_model('bbcg_bart')
 class BBCGBARTModel(TransformerModel):
