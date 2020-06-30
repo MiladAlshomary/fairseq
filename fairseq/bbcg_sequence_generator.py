@@ -200,8 +200,7 @@ class BBCGSequenceGenerator(nn.Module):
         ), "min_len cannot be larger than max_len, please adjust these!"
 
         #for the encoder, don't pass the user context
-        for item in net_input:
-            del item['user_context']
+        del net_input['user_context']
 
         logger.info(net_input[0])
         # compute the encoder output for each beam
