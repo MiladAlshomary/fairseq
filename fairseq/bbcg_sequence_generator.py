@@ -270,9 +270,13 @@ class BBCGSequenceGenerator(nn.Module):
                     encoder_outs, reorder_state
                 )
 
+
+            user_context = sample["net_input"]['user_context']
+
             lprobs, avg_attn_scores = self.model.forward_decoder(
                 tokens[:, : step + 1],
                 encoder_outs,
+                user_context,
                 incremental_states,
                 self.temperature,
             )
