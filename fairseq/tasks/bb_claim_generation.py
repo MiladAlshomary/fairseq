@@ -12,7 +12,8 @@ import pickle
 
 import numpy as np
 
-from fairseq import metrics, search, tokenizer, utils
+from fairseq import metrics, search, tokenizer, utils, options
+
 
 from fairseq.data import (
     AppendTokenDataset,
