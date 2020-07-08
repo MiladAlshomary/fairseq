@@ -285,52 +285,52 @@ class TranslationTask(FairseqTask):
         return model
 
 
-    @classmethod
-    def load_dictionary(cls, filename):
-        """Load the dictionary from the filename
+    # @classmethod
+    # def load_dictionary(cls, filename):
+    #     """Load the dictionary from the filename
 
-        Args:
-            filename (str): the filename
-        """
-        d = Dictionary.load(filename)
+    #     Args:
+    #         filename (str): the filename
+    #     """
+    #     d = Dictionary.load(filename)
 
-        d.add_symbol('<sbi>')
-        d.add_symbol('<qus>')
-        d.add_symbol('<answer>')
+    #     d.add_symbol('<sbi>')
+    #     d.add_symbol('<qus>')
+    #     d.add_symbol('<answer>')
 
-        logger.info('added the special symboles....')
+    #     logger.info('added the special symboles....')
 
-        return d
+    #     return d
 
-    def build_dictionary(
-        cls, filenames, workers=1, threshold=-1, nwords=-1, padding_factor=8
-    ):
-        """Build the dictionary
+    # def build_dictionary(
+    #     cls, filenames, workers=1, threshold=-1, nwords=-1, padding_factor=8
+    # ):
+    #     """Build the dictionary
 
-        Args:
-            filenames (list): list of filenames
-            workers (int): number of concurrent workers
-            threshold (int): defines the minimum word count
-            nwords (int): defines the total number of words in the final dictionary,
-                including special symbols
-            padding_factor (int): can be used to pad the dictionary size to be a
-                multiple of 8, which is important on some hardware (e.g., Nvidia
-                Tensor Cores).
-        """
-        d = Dictionary()
-        for filename in filenames:
-            Dictionary.add_file_to_dictionary(
-                filename, d, tokenizer.tokenize_line, workers
-            )
+    #     Args:
+    #         filenames (list): list of filenames
+    #         workers (int): number of concurrent workers
+    #         threshold (int): defines the minimum word count
+    #         nwords (int): defines the total number of words in the final dictionary,
+    #             including special symbols
+    #         padding_factor (int): can be used to pad the dictionary size to be a
+    #             multiple of 8, which is important on some hardware (e.g., Nvidia
+    #             Tensor Cores).
+    #     """
+    #     d = Dictionary()
+    #     for filename in filenames:
+    #         Dictionary.add_file_to_dictionary(
+    #             filename, d, tokenizer.tokenize_line, workers
+    #         )
 
 
-        d.add_symbol('<sbi>')
-        d.add_symbol('<qus>')
-        d.add_symbol('<answer>')
+    #     d.add_symbol('<sbi>')
+    #     d.add_symbol('<qus>')
+    #     d.add_symbol('<answer>')
 
-        logger.info('added the special symboles....')
-        d.finalize(threshold=threshold, nwords=nwords, padding_factor=padding_factor)
-        return d
+    #     logger.info('added the special symboles....')
+    #     d.finalize(threshold=threshold, nwords=nwords, padding_factor=padding_factor)
+    #     return d
 
     def valid_step(self, sample, model, criterion):
         loss, sample_size, logging_output = super().valid_step(sample, model, criterion)

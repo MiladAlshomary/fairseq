@@ -60,9 +60,13 @@ class Encoder:
             raise ImportError('Please install regex with: pip install regex')
 
         # Should haved added re.IGNORECASE so BPE merges can happen for capitalized versions of contractions
-        self.pat = self.re.compile(r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""")
+        self.pat = self.re.compile(r"""'s|'t|'re|'ve|'m|'ll|'d|<qus>|<answer>|<sbi> ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""")
 
     def bpe(self, token):
+        if token in ['<sbi>', '<qus>', '<answer>']:
+            print('inside bpe ...............')
+            return token
+
         if token in self.cache:
             return self.cache[token]
         word = tuple(token)
