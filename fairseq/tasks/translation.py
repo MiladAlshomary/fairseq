@@ -283,6 +283,24 @@ class TranslationTask(FairseqTask):
             self.sequence_generator = self.build_generator([model], Namespace(**gen_args))
         return model
 
+
+    @classmethod
+    def load_dictionary(cls, filename):
+        """Load the dictionary from the filename
+
+        Args:
+            filename (str): the filename
+        """
+        d = Dictionary.load(filename)
+
+        d.add_symbol('<sbi>')
+        d.add_symbol('<qus>')
+        d.add_symbol('<answer>')
+
+        logger.info('added the special symboles....')
+
+        return d
+
     def build_dictionary(
         cls, filenames, workers=1, threshold=-1, nwords=-1, padding_factor=8
     ):
