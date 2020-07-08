@@ -110,7 +110,7 @@ class BBCGBARTHubInterface(nn.Module):
 
     def generate(self, tokens: List[torch.LongTensor], user_contexts, beam: int = 5, verbose: bool = False, **kwargs) -> torch.LongTensor:
         sample = self._build_sample(tokens, user_contexts)
-
+        
         # build generator using current args as well as any kwargs
         gen_args = copy.copy(self.args)
         gen_args.beam = beam

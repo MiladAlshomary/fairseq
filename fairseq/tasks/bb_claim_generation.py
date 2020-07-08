@@ -295,7 +295,6 @@ class BBClaimGenerationTask(FairseqTask):
 
         from fairseq.bbcg_sequence_generator import (
             BBCGSequenceGenerator,
-            BBCGSequenceGeneratorWithAlignment,
         )
 
         # Choose search strategy. Defaults to Beam Search.
