@@ -283,6 +283,36 @@ class TranslationTask(FairseqTask):
             self.sequence_generator = self.build_generator([model], Namespace(**gen_args))
         return model
 
+    def build_dictionary(
+        cls, filenames, workers=1, threshold=-1, nwords=-1, padding_factor=8
+    ):
+        """Build the dictionary
+
+        Args:
+            filenames (list): list of filenames
+            workers (int): number of concurrent workers
+            threshold (int): defines the minimum word count
+            nwords (int): defines the total number of words in the final dictionary,
+                including special symbols
+            padding_factor (int): can be used to pad the dictionary size to be a
+                multiple of 8, which is important on some hardware (e.g., Nvidia
+                Tensor Cores).
+        """
+        d = Dictionary()
+        for filename in filenames:
+            Dictionary.add_file_to_dictionary(
+                filename, d, tokenizer.tokenize_line, workers
+            )
+
+
+        d.add_symbol('<sbi>')
+        d.add_symbol('<qus>')
+        d.add_symbol('<answer>')
+
+        logger.info('added the special symboles....')
+        d.finalize(threshold=threshold, nwords=nwords, padding_factor=padding_factor)
+        return d
+
     def valid_step(self, sample, model, criterion):
         loss, sample_size, logging_output = super().valid_step(sample, model, criterion)
         if self.args.eval_bleu:
