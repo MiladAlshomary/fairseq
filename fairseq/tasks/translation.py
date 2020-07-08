@@ -22,6 +22,7 @@ from fairseq.data import (
     PrependTokenDataset,
     StripTokenDataset,
     TruncateDataset,
+    Dictionary
 )
 
 from fairseq.tasks import FairseqTask, register_task
